@@ -4,7 +4,7 @@ use std::str;
 use error::{Result, Error};
 
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Hex(String, String, String);
 
 impl FromStr for Hex {
@@ -38,6 +38,3 @@ impl Hex {
         (&self.0, &self.1, &self.2)
     }
 }
-
-
-
