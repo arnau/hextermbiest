@@ -1,0 +1,8 @@
+[package]
+name = "hextermbiest"
+version = "0.1.0"
+authors = ["Arnau Siches <asiches@gmail.com>"]
+
+[dependencies]
+palette = "*"
+termion = "*"
