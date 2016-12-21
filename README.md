@@ -16,6 +16,9 @@ To use the cube use the standalone cli:
 cargo run --bin cube
 ```
 
+![color cube screenshot](docs/assets/cube.png)
+
+
 ## TODO
 
 * Unify CLI under `biest`.
