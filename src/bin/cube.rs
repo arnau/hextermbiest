@@ -1,4 +1,3 @@
-extern crate termion;
 extern crate hextermbiest;
 
 use hextermbiest::xterm::{SystemColors, GrayscaleRamp, ColorCube};
