@@ -7,7 +7,8 @@ use termion::style::Reset;
 use error::{Result, Error};
 
 
-const SYSTEM: [u32; 16] = [
+/// System colors.
+pub const SYSTEM: [u32; 16] = [
     0x000000, 0x800000, 0x008000, 0x808000,
     0x000080, 0x800080, 0x008080, 0xc0c0c0,
 
@@ -15,12 +16,16 @@ const SYSTEM: [u32; 16] = [
     0x0000ff, 0xff00ff, 0x00ffff, 0xffffff,
 ];
 
-const INTENSITIES: [u32; 6] = [
+
+/// Cube (6x6x6) intensities.
+pub const INTENSITIES: [u32; 6] = [
     0x00, 0x5F, 0x87,
     0xAF, 0xD7, 0xFF
 ];
 
-const SHADES: [u32; 24] = [
+
+/// Shades of grey.
+pub const SHADES: [u32; 24] = [
     0x08, 0x12, 0x1C, 0x26,
     0x30, 0x3A, 0x44, 0x4E,
     0x58, 0x62, 0x6C, 0x76,
@@ -29,13 +34,14 @@ const SHADES: [u32; 24] = [
     0xD0, 0xDA, 0xE4, 0xEE,
 ];
 
+
 /// RGB triple encoded as three unsigned integers.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Rgb(pub u32, pub u32, pub u32);
 
 impl Rgb {
     pub fn triple(&self) -> (u32, u32, u32) {
-        (self.0, self.1, self.2)
+        (self.red(), self.green(), self.blue())
     }
 
     pub fn red(&self) -> u32 {
@@ -48,6 +54,16 @@ impl Rgb {
 
     pub fn blue(&self) -> u32 {
         self.2
+    }
+
+    pub fn is_grey(&self) -> bool {
+        self.red() == self.green() && self.red() == self.blue()
+    }
+
+    pub fn sample(&self) -> String {
+        format!("{}     {}", Bg(AnsiValue::rgb(self.red() as u8,
+                                               self.green() as u8,
+                                               self.blue() as u8)), Reset)
     }
 }
 
@@ -143,7 +159,7 @@ impl From<XTerm> for Rgb {
     /// ```
     fn from(color: XTerm) -> Rgb {
         match color {
-            XTerm::Grayscale(code) => {
+            XTerm::Greyscale(code) => {
                 let shade = (code as usize) - 0xE8;
                 let (_, &hex) = SHADES.into_iter().enumerate()
                                       .find(|&(x, _)| x == shade).unwrap();
@@ -176,17 +192,33 @@ impl From<XTerm> for Rgb {
 pub enum XTerm {
     System(u32),
     Cube(u32),
-    Grayscale(u32),
+    Greyscale(u32),
+}
+
+impl XTerm {
+    pub fn code(&self) -> u32 {
+        match *self {
+            XTerm::System(x) => x,
+            XTerm::Greyscale(x) => x,
+            XTerm::Cube(x) => x,
+        }
+    }
+
+    pub fn sample(&self) -> String {
+        let code = self.code() as u8;
+
+        format!("{}     {}", Bg(AnsiValue(code)), Reset)
+    }
 }
 
 impl From<Rgb> for XTerm {
     fn from(rgb: Rgb) -> XTerm {
         let (red, green, blue) = rgb.triple();
 
-        if red == green && red == blue {
+        if rgb.is_grey() {
             if let Some((shade, _)) = SHADES.into_iter().enumerate()
                                             .find(|&(_, &hex)| hex == red) {
-                return XTerm::Grayscale(0xE8 + (shade as u32));
+                return XTerm::Greyscale(0xE8 + (shade as u32));
             }
         }
 
@@ -213,17 +245,28 @@ impl From<Rgb> for XTerm {
 
 impl fmt::Display for XTerm {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:03}", self)
+        write!(f, "{} {:03}", self.sample(), self.code())
     }
 }
 
+impl fmt::LowerHex for XTerm {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:06x}", Rgb::from(self.clone()))
+    }
+}
+
+impl fmt::UpperHex for XTerm {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:06X}", Rgb::from(self.clone()))
+    }
+}
 
 
 impl From<u32> for XTerm {
     fn from(x: u32) -> XTerm {
         match x {
             x if x <= 15 => XTerm::System(x),
-            x if x >= 232 => XTerm::Grayscale(x),
+            x if x >= 232 => XTerm::Greyscale(x),
             x => XTerm::Cube(x),
         }
     }
@@ -231,13 +274,21 @@ impl From<u32> for XTerm {
 
 impl From<XTerm> for u32 {
     fn from(color: XTerm) -> u32 {
-        match color {
-                XTerm::System(x) => x,
-                XTerm::Cube(x) => x,
-                XTerm::Grayscale(x) => x,
-        }
+        color.code()
     }
 }
+
+
+impl FromStr for XTerm {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<XTerm> {
+        let rgb = s.parse::<Rgb>()?;
+
+        Ok(From::from(rgb))
+    }
+}
+
 
 /// The only values allowed in a cube are 0x00, 0x5f, 0x87, 0xAF, 0xD7 and
 /// 0xFF.  This function makes sure the value is one of these.
@@ -249,4 +300,15 @@ fn approximate(x: u32) -> u32 {
         x if x > 0xAF && x < 0xD7 => 0xD7,
         x => x,
     }
+}
+
+
+pub fn codex() -> Vec<XTerm> {
+    (0..256).map(|x| XTerm::from(x)).collect()
+}
+
+pub fn grayscale() -> Vec<u32> {
+    SHADES.into_iter()
+          .map(|x| (x << 16) | (x << 8) | x)
+          .collect()
 }

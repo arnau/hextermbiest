@@ -303,3 +303,55 @@ fn test_grayscale_to_rgb() {
         assert_eq!(u32::from(rgb2), x);
     }
 }
+
+
+#[test]
+fn test_string_to_rgb() {
+    let xs = vec![
+        "#00005f",
+        "#005f5f",
+        "#00875f",
+        "#0087d7",
+        "#00ffaf",
+        "#5faf87",
+        "#875f00",
+        "#af5f00",
+        "#af5f87",
+        "#d70000",
+        "#d7d75f",
+        "#ffffd7",
+    ];
+
+    for x in xs {
+        let color = str::parse::<Rgb>(x).unwrap();
+        let res = format!("#{:06x}", color);
+
+        assert_eq!(res, x);
+    }
+}
+
+
+#[test]
+fn test_string_to_xterm() {
+    let xs = vec![
+        "#00005f",
+        "#005f5f",
+        "#00875f",
+        "#0087d7",
+        "#00ffaf",
+        "#5faf87",
+        "#875f00",
+        "#af5f00",
+        "#af5f87",
+        "#d70000",
+        "#d7d75f",
+        "#ffffd7",
+    ];
+
+    for x in xs {
+        let color = str::parse::<XTerm>(x).unwrap();
+        let res = format!("#{:06x}", color);
+
+        assert_eq!(res, x);
+    }
+}
