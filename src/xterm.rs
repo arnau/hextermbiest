@@ -2,46 +2,6 @@ use std::fmt;
 use termion::color::{Bg, AnsiValue};
 use termion::style::Reset;
 
-use hex::Hex;
-
-
-#[derive(Debug)]
-pub struct XTerm(u32);
-
-impl From<Hex> for XTerm {
-    fn from(color: Hex) -> XTerm {
-        let (r, g, b) = color.raw();
-        let vr = u32::from_str_radix(r, 16).unwrap();
-        let vg = u32::from_str_radix(g, 16).unwrap();
-        let vb = u32::from_str_radix(b, 16).unwrap();
-
-        // a * 0 + b = 0
-        // a * 5 + b = 255
-        // a = (255 - 0) / 5 = 51
-        let res = (vr / 51) * 36 + (vg / 51) * 6 + (vb / 51) + 16;
-
-        XTerm(res)
-    }
-}
-
-impl fmt::Display for XTerm {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl From<XTerm> for u8 {
-    fn from(color: XTerm) -> u8 {
-        color.0 as u8
-    }
-}
-
-impl<'a> From<&'a XTerm> for u8 {
-    fn from(color: &'a XTerm) -> u8 {
-        color.0 as u8
-    }
-}
-
 
 #[derive(Debug)]
 pub struct SystemColors;
@@ -58,14 +18,14 @@ impl fmt::Display for SystemColors {
 }
 
 #[derive(Debug)]
-pub struct GrayscaleRamp;
+pub struct GreyscaleRamp;
 
-impl fmt::Display for GrayscaleRamp {
+impl fmt::Display for GreyscaleRamp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let ramp = (0..24).map(|x| format!("{}  ", Bg(AnsiValue::grayscale(x))))
                           .collect::<String>();
 
-        write!(f, "{}\n{}{}", "Grayscale ramp:", ramp, Reset)
+        write!(f, "{}\n{}{}", "Greyscale ramp:", ramp, Reset)
     }
 }
 

@@ -1,4 +1,5 @@
 use std::string::ParseError;
+use std::num::ParseIntError;
 use std::{result, str};
 
 
@@ -9,6 +10,12 @@ pub enum Error {
     Parse,
     Utf8Error,
     NotImplemented,
+}
+
+impl From<ParseIntError> for Error {
+    fn from(_: ParseIntError) -> Error {
+        Error::Parse
+    }
 }
 
 impl From<ParseError> for Error {
