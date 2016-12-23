@@ -19,6 +19,15 @@ cargo run --bin cube
 ![color cube screenshot](docs/assets/cube.png)
 
 
+To use the codex use the standalone cli:
+
+```sh
+cargo run --bin codex | grep 221
+```
+
+![color codex screenshot](docs/assets/codex.png)
+
+
 ## TODO
 
 * Unify CLI under `biest`.
